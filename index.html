@@ -1,0 +1,76 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>The Hacker Hosting</title>
+  <link rel="icon" href="/favicon.png" />
+  <style>
+    /* Minimal neon/glow style */
+    body { margin:0; font-family: Inter, system-ui, Arial; background: #07070a; color:#e6e6e6; }
+    .hero { min-height:80vh; display:flex; align-items:center; justify-content:center; flex-direction:column; text-align:center; padding:40px; }
+    h1 { font-size:48px; letter-spacing:1px; color:#ff3b3b; text-shadow: 0 0 20px rgba(255,59,59,0.35); margin:0; }
+    p { color:#cfcfcf; margin:12px 0 24px; max-width:700px; }
+    .btn { padding:12px 18px; border-radius:999px; border: none; cursor:pointer; font-weight:600; margin:6px; }
+    .btn-red { background:#ff3b3b; color:white; box-shadow: 0 6px 30px rgba(255,59,59,0.12); }
+    .btn-dark { background:#222; color:#ddd; border:1px solid #333; }
+    .features { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; padding:30px; max-width:1000px; margin:0 auto; }
+    .card { background:rgba(255,255,255,0.03); padding:18px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); text-align:center; }
+    footer { padding:18px; text-align:center; color:#999; font-size:14px; }
+    /* animated background */
+    .bg-canvas { position:fixed; inset:0; z-index:-1; }
+  </style>
+</head>
+<body>
+  <canvas id="bg" class="bg-canvas"></canvas>
+  <div class="hero">
+    <h1>The Hacker Hosting</h1>
+    <p>Host your Minecraft server for free — no limits, no costs, no ads.</p>
+    <div>
+      <button class="btn btn-red" onclick="location.href='/plans.html'">🔴 Create Free Server</button>
+      <button class="btn btn-dark" onclick="location.href='/login.html'">⚫ Login / Signup</button>
+    </div>
+  </div>
+
+  <section class="features">
+    <div class="card">Unlimited Slots</div>
+    <div class="card">DDoS Protection</div>
+    <div class="card">Free Forever</div>
+    <div class="card">Easy Setup</div>
+    <div class="card">Fast Performance</div>
+  </section>
+
+  <footer>Links: <a href="/">Home</a> | <a href="/plans.html">Hosting Plans</a> | <a href="/contact.html">Contact</a> | <a href="/terms.html">Terms</a> | <a href="https://discord.gg" target="_blank">Discord</a><br>&copy; 2025 The Hacker Hosting</footer>
+
+  <script>
+    // Simple animated particles background (minimal)
+    const canvas = document.getElementById('bg');
+    const ctx = canvas.getContext('2d');
+    function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+    addEventListener('resize', resize);
+    resize();
+    const particles = Array.from({length:60}).map(()=>({
+      x: Math.random()*canvas.width, y: Math.random()*canvas.height,
+      vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5,
+      r: 1 + Math.random()*2
+    }));
+    function frame(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      for(const p of particles){
+        p.x += p.vx; p.y += p.vy;
+        if(p.x<0) p.x = canvas.width;
+        if(p.y<0) p.y = canvas.height;
+        if(p.x>canvas.width) p.x = 0;
+        if(p.y>canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(255,59,59,0.9)';
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fill();
+      }
+      requestAnimationFrame(frame);
+    }
+    frame();
+  </script>
+</body>
+</html>

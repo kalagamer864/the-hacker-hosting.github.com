@@ -1,0 +1,41 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Choose Your Free Plan — The Hacker Hosting</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#05050a;color:#eee;padding:30px}
+    .container{max-width:900px;margin:0 auto}
+    h1{color:#ff3b3b}
+    .plans{display:flex;gap:12px;flex-wrap:wrap}
+    .plan{background:rgba(255,255,255,0.03);padding:18px;border-radius:10px;flex:1;min-width:200px}
+    button{cursor:pointer;padding:10px 12px;border-radius:8px;border:none;background:#ff3b3b;color:#fff}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Choose Your Free Plan</h1>
+    <div id="plans" class="plans"></div>
+  </div>
+  <script>
+    async function loadPlans(){
+      const res = await fetch('/api/plans');
+      const plans = await res.json();
+      const container = document.getElementById('plans');
+      container.innerHTML = '';
+      plans.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'plan';
+        div.innerHTML = `<h3>${p.name}</h3><p>RAM: ${p.ram}<br>CPU: ${p.cpu}<br>Storage: ${p.storage}<br>Slots: ${p.slots}<br>Auto Backup: ${p.autoBackup ? '✅' : '❌'}</p><button onclick="selectPlan('${p.id}')">Select Plan</button>`;
+        container.appendChild(div);
+      });
+    }
+    function selectPlan(planId){
+      // redirect to signup/login with plan query
+      location.href = '/signup.html?plan=' + encodeURIComponent(planId);
+    }
+    loadPlans();
+  </script>
+</body>
+</html>

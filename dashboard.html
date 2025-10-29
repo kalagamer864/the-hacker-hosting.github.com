@@ -1,0 +1,113 @@
+
+<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard — The Hacker Hosting</title>
+<style>body{font-family:Arial;background:#06060a;color:#eee;padding:20px}.wrap{max-width:1000px;margin:0 auto}.sidebar{float:left;width:220px;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px}.main{margin-left:240px}.card{background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;margin-bottom:12px}</style>
+</head><body>
+<div class="wrap">
+  <div class="sidebar">
+    <h3>Menu</h3>
+    <div><a href="#" onclick="logout()">Logout</a></div>
+    <div><a href="#myservers">My Servers</a></div>
+    <div><a href="#create">Create New Server</a></div>
+  </div>
+  <div class="main">
+    <h1>Welcome to your Dashboard</h1>
+    <div id="user" class="card">Loading user...</div>
+
+    <section id="create" class="card">
+      <h3>Create New Server</h3>
+      <input id="srvname" placeholder="Server name">
+      <select id="planSelect"></select>
+      <button onclick="createServer()">Create</button>
+      <div id="createMsg" style="color:#f66"></div>
+    </section>
+
+    <section id="myservers" class="card">
+      <h3>My Servers</h3>
+      <div id="serversList">Loading...</div>
+    </section>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  function getToken(){ return localStorage.getItem('token') || sessionStorage.getItem('token'); }
+  if (!getToken()) location.href='/login.html';
+
+  async function loadUser(){
+    const token = getToken();
+    // decode token minimally for username display (not verifying in client)
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      document.getElementById('user').innerText = 'Logged in as: ' + (payload.username || payload.email);
+    } catch(e){}
+  }
+
+  async function loadPlans(){
+    const res = await fetch('/api/plans');
+    const plans = await res.json();
+    const sel = document.getElementById('planSelect');
+    sel.innerHTML = '';
+    plans.forEach(p => { const o = document.createElement('option'); o.value = p.id; o.text = p.name + ' — ' + p.ram; sel.appendChild(o); });
+  }
+
+  async function loadServers(){
+    const res = await fetch('/api/myservers', { headers: { 'Authorization': 'Bearer ' + getToken() }});
+    const j = await res.json();
+    const container = document.getElementById('serversList');
+    if (!res.ok) { container.innerText = j.error || 'Failed to load'; return; }
+    container.innerHTML = '';
+    if (j.length === 0) return container.innerText = 'No servers yet';
+    j.forEach(s => {
+      const div = document.createElement('div');
+      div.innerHTML = '<b>'+s.name+'</b> ('+s.planId+') — status: '+s.status+' <button onclick="openConsole(\''+s.id+'\')">Console</button>';
+      container.appendChild(div);
+    });
+  }
+
+  async function createServer(){
+    const name = document.getElementById('srvname').value;
+    const planId = document.getElementById('planSelect').value;
+    const res = await fetch('/api/create-server', { method:'POST', headers: {'content-type':'application/json','Authorization':'Bearer '+getToken()}, body: JSON.stringify({name,planId})});
+    const j = await res.json();
+    if (res.ok) {
+      document.getElementById('createMsg').style.color='lightgreen';
+      document.getElementById('createMsg').innerText = 'Server created: ' + j.name;
+      loadServers();
+    } else {
+      document.getElementById('createMsg').style.color='red';
+      document.getElementById('createMsg').innerText = j.error || 'Failed';
+    }
+  }
+
+  function logout(){ localStorage.removeItem('token'); sessionStorage.removeItem('token'); location.href='/'; }
+
+  // Console demo using Socket.IO
+  const socket = io();
+  function openConsole(serverId){
+    const win = window.open('', '_blank', 'width=600,height=400');
+    win.document.write('<pre id="log" style="background:#000;color:#0f0;padding:10px;height:100%;white-space:pre-wrap;"></pre><input id="cmd" placeholder="command"><button id="send">Send</button>');
+    socket.emit('join-server-console', { serverId });
+    socket.on('console-log', (msg) => {
+      try {
+        const log = win.document.getElementById('log');
+        if (log) { log.innerText += msg + '\n'; log.scrollTop = log.scrollHeight; }
+      } catch (e) {}
+    });
+    // binding send
+    const interval = setInterval(()=> {
+      if (win.closed) { clearInterval(interval); }
+      const sendBtn = win.document.getElementById('send');
+      if (sendBtn) {
+        sendBtn.onclick = () => {
+          const cmd = win.document.getElementById('cmd').value;
+          socket.emit('server-command', { serverId, cmd });
+        };
+      }
+    }, 500);
+  }
+
+  // initialize
+  loadUser(); loadPlans(); loadServers();
+</script>
+</body></html>
